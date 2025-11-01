@@ -1,0 +1,15 @@
+# Demo and local testing files (do not commit)
+slider_demo.html
+js/slider_demo.js
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/

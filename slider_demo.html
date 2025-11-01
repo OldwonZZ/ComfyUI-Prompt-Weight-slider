@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prompt Slider Demo</title>
+  <style>
+    html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background: #0f1219; color: #e6e8ec; }
+    .page { padding: 16px; max-width: 1280px; margin: 0 auto; }
+    .row { display: flex; gap: 12px; align-items: stretch; }
+    .col { flex: 1; }
+    .panel { background: #141823; border: 1px solid #242b38; border-radius: 12px; padding: 12px; }
+    .panel h2 { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #cfd4dc; }
+    textarea { width: 100%; height: 160px; box-sizing: border-box; background: #0f131d; color: #dbe0ea; border: 1px solid #283244; border-radius: 8px; padding: 10px; resize: vertical; outline: none; }
+    textarea::placeholder { color: #6c7487; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    button { background: #2b6ae6; color: #fff; border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: 600; }
+    button.secondary { background: #222938; color: #d8dce6; border: 1px solid #2f3748; }
+    button.ghost { background: transparent; color: #aab2c2; border: 1px dashed #2f3748; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .help { color: #7f8696; font-size: 12px; margin-top: 6px; }
+
+    .node { background: #151b27; border: 1px solid #243145; border-radius: 12px; overflow: hidden; }
+    .node-header { background: #1b2230; border-bottom: 1px solid #263349; padding: 8px 12px; font-weight: 600; color: #cfd4dc; font-size: 13px; }
+    .node-body { padding: 10px 12px; }
+    .ports { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .port { display: flex; align-items: center; gap: 8px; color: #aab2c2; font-size: 12px; }
+    .port .dot { width: 10px; height: 10px; border-radius: 50%; background: #38445a; border: 1px solid #50607b; }
+    .port .dot.linked { background: #3ac569; border-color: #61d487; }
+    .port .name { color: #d3d9e5; font-weight: 600; }
+    .node-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .canvas-wrap { overflow-x: auto; overflow-y: hidden; border-radius: 10px; border: 1px solid #242b38; background: #0d1017; }
+    canvas { display: block; }
+    .outputs { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
+    .output-line { display: grid; grid-template-columns: 180px 1fr; align-items: center; gap: 8px; }
+    .output-line label { color: #aab2c2; font-size: 12px; }
+    .output-line input { width: 100%; box-sizing: border-box; background: #0f131d; color: #dbe0ea; border: 1px solid #283244; border-radius: 8px; padding: 8px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="row">
+      <div class="col" style="max-width: 460px;">
+        <div class="panel">
+          <h2>Graph Simulator</h2>
+          <div class="help">模拟上游 STRING 输入给 `prompts` 插口。</div>
+          <textarea id="promptsInput" placeholder="happy, fat\nshiny, detailed"></textarea>
+          <div class="controls">
+            <button id="linkBtn" class="secondary">Link to prompts</button>
+            <button id="unlinkBtn" class="ghost">Unlink</button>
+          </div>
+          <div class="help">使用逗号或换行分隔，去重保留顺序。</div>
+        </div>
+
+        <div class="panel" style="margin-top: 12px;">
+          <h2>UI Settings</h2>
+          <div class="help">调整参数后右侧 UI 将实时刷新。</div>
+          <div class="outputs" style="margin-top: 8px;">
+            <div class="output-line"><label for="inp_columnWidth">columnWidth</label><input id="inp_columnWidth" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_gap">gap</label><input id="inp_gap" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_sidePadding">sidePadding</label><input id="inp_sidePadding" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_trackHeight">trackHeight</label><input id="inp_trackHeight" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_topPadding">topPadding</label><input id="inp_topPadding" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_bottomPadding">bottomPadding</label><input id="inp_bottomPadding" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_sliderWidth">sliderWidth</label><input id="inp_sliderWidth" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_knobRadius">knobRadius</label><input id="inp_knobRadius" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_trackRadius">trackRadius</label><input id="inp_trackRadius" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_trackBorder">trackBorder</label><input id="inp_trackBorder" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_minPanelWidth">MIN_PANEL_WIDTH</label><input id="inp_minPanelWidth" type="number" step="10" /></div>
+            <div class="output-line"><label for="inp_outerMargin">OUTER_MARGIN</label><input id="inp_outerMargin" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_btnWidth">LoadBtn width</label><input id="inp_btnWidth" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_btnHeight">LoadBtn height</label><input id="inp_btnHeight" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_nodeWidthExtra">Node width extra</label><input id="inp_nodeWidthExtra" type="number" step="1" /></div>
+            <div class="output-line"><label for="inp_nodeHeightExtra">Node height extra</label><input id="inp_nodeHeightExtra" type="number" step="1" /></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div id="nodeContainer" class="node">
+          <div class="node-header">Prompt weight slider</div>
+          <div class="node-body">
+            <div class="ports">
+              <div class="port">
+                <div id="promptsDot" class="dot"></div>
+                <div class="name">prompts</div>
+              </div>
+              <div class="port">
+                <div class="name">output</div>
+                <div id="outDot" class="dot linked"></div>
+              </div>
+            </div>
+            <div class="node-controls">
+              <button id="loadBtn">Load Prompts</button>
+              <button id="resetBtn" class="secondary">Reset All to 1.0</button>
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="sliderCanvas" width="880" height="180"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/slider_demo.js"></script>
+</body>
+</html>
+
